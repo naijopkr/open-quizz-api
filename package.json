@@ -4,8 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "prod": "NODE_ENV=production node index.js"
+    "start": "./start.sh"
   },
   "author": "Ariel Barcellos",
   "license": "ISC",
@@ -20,6 +19,7 @@
     "passport-local-mongoose": "^5.0.1"
   },
   "devDependencies": {
-    "eslint": "^5.10.0"
+    "eslint": "^5.10.0",
+    "nodemon": "^1.18.9"
   }
 }
