@@ -13,26 +13,26 @@ module.exports = app => {
 
   app.get('/api/quizz/:id', (req, res) => {
     Quizz.findById(req.params.id, 
-     '-questions.rightAnswer -questions.explanation', (err, quizz) => {
-      if (err) {
-        console.log(err)
-      } else {
-        res.send(quizz)
-      }
-    })
+      '-questions.rightAnswer -questions.explanation', (err, quizz) => {
+        if (err) {
+          console.log(err)
+        } else {
+          res.send(quizz)
+        }
+      })
   })
 
   app.get('/api/quizzAnswer/:quizzId/:questionId', (req, res) => {
     Quizz.findOne(
       { _id: req.params.quizzId, questions: { $elemMatch: { _id: req.params.questionId } } }, 
       'questions.rightAnswer questions.explanation', (err, quizz) => {
-       if (err) {
-         console.log(err)
-       } else {
-         const { rightAnswer, explanation } = quizz.questions[0]
-         res.send({ rightAnswer, explanation })
-       }
-     })
+        if (err) {
+          console.log(err)
+        } else {
+          const { rightAnswer, explanation } = quizz.questions[0]
+          res.send({ rightAnswer, explanation })
+        }
+      })
   })
 
   app.post('/api/quizz', (req, res) => {

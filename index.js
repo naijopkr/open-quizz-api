@@ -19,14 +19,12 @@ app.use(
     keys: [keys.cookieKey]
   })
 )
-
 app.use(passport.initialize())
 app.use(passport.session())
 
 passport.use(new LocalStrategy({
   usernameField: 'email'
 }, User.authenticate()))
-
 passport.serializeUser(User.serializeUser())
 passport.deserializeUser(User.deserializeUser())
 
@@ -50,6 +48,7 @@ app.listen(PORT, err => {
   if (err) {
     console.log(err)
   } else {
-    console.log('Server is up on ' + PORT)
+    console.log('NODE_ENV:', process.env.NODE_ENV || 'development')
+    console.log('Server is up on', PORT)
   }
 })

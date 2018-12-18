@@ -23,22 +23,36 @@ module.exports = app => {
   })
 
   app.put('/api/users', (req, res) => {
-    req.user = { fistName, lastName, email } = req.body
-    User.findByIdAndUpdate(req.user._id, req.user, (err, user) => {
+    const { firstName, lastName, email } = req.body
+    const updatedUser = {
+      ...req.user,
+      firstName,
+      lastName,
+      email
+    }
+    User.findByIdAndUpdate(updatedUser._id, updatedUser, (err, user) => {
       if (err) {
         res.send(err)
       } else {
-        res.send(req.user)
+        res.send(user)
       }
     })
   })
 
   app.post('/api/login', (req, res, next) => {
-    passport.authenticate('local', (err, user, info) => {
+    passport.authenticate('local', (err, user) => {
+      if (err) {
+        console.log(err)
+      }
+
       if (!user) { 
         res.json({ message: 'Usuário ou senha incorretos.', status: 401 }) 
       } else {
         req.logIn(user, (err) => {
+          if (err) {
+            console.log(err)
+          }
+          
           res.send(user)
         })
       }
