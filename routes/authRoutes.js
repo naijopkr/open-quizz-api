@@ -1,6 +1,8 @@
 const passport = require('passport')
 const User = require('../models/User')
 
+const requireAuth = (req, res, next) => (req.user ? next() : res.sendStatus(403))
+
 module.exports = app => {
 
   //CREATE USER
@@ -11,60 +13,49 @@ module.exports = app => {
       lastName,
       email
     })
+
     User.register(newUser, password, (err) => {
       if (err) {
-        if (err.name === 'UserExistsError' || err.code == 11000) {
-          res.send({ message: 'Usuário já cadastrado', status: 400 })
-        } else {
-          console.log(err)
-          res.send(err)
-        }
-      } else {
-        passport.authenticate('local')(req, res, () => {
-          res.redirect('/api/current_user')
-        })
+        return err.name === 'UserExistsError'
+          ? res.status(400).send(err)
+          : res.status(500).send(err)
       }
+
+      return passport.authenticate('local', {
+        successRedirect: '/api/current_user'
+      })(req, res)
     })
   })
 
   //UPDATE USER
-  //TODO: Handle updating e-mail (username)
   app.put('/api/users', (req, res) => {
-    const { firstName, lastName } = req.body
-    const user = {
-      firstName,
-      lastName
-    }
+    const { 
+      firstName = req.user.firstName, 
+      lastName = req.user.lastName, 
+      email = req.user.email 
+    } = req.body
 
-    User.findByIdAndUpdate(req.user._id, user, (err) => {
-      if (err) {
-        res.send(err)
-      } else {
-        res.redirect('/api/current_user')
-      }
+    const { user } = req
+
+    user.set({
+      firstName,
+      lastName,
+      email
+    })
+
+    user.save((err, updUser) => {
+      if (err) return res.status(500).send(err)
+      req.login(updUser, err => { if (err) return res.status(401).send(err) })
+      res.redirect('/api/current_user')
     })
   })
 
+
   //AUTHENTICATE USER
-  app.post('/api/login', (req, res, next) => {
-
-    passport.authenticate('local', (err, user) => {
-      if (err) {
-        return next(err)
-      }
-
-      if (!user) { 
-        res.send({ message: 'Usuário ou senha incorretos.', status: 401 }) 
-      } else {
-        req.logIn(user, (err) => {
-          if (err) {
-            console.log(err)
-          }
-          
-          res.redirect('/api/current_user')
-        })
-      }
-    })(req, res, next)
+  app.post('/api/login', (req, res) => {
+    passport.authenticate('local', {
+      successRedirect: '/api/current_user'
+    })(req, res)
   })
 
   //LOGOUT
@@ -74,7 +65,7 @@ module.exports = app => {
   })
 
   //FETCH USER
-  app.get('/api/current_user', (req, res) => {
+  app.get('/api/current_user', requireAuth, (req, res) => {
     res.send(req.user)
   })
 }

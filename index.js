@@ -7,8 +7,11 @@ const LocalStrategy = require('passport-local')
 const keys = require('./config/keys')
 const User = require('./models/User')
 
-mongoose.connect(keys.mongoURI, { useNewUrlParser: true })
-mongoose.set('useFindAndModify', false)
+const mongooseOptions = {
+  useNewUrlParser: true, 
+  useCreateIndex: true
+}
+mongoose.connect(keys.mongoURI, mongooseOptions)
 
 const app = express()
 
