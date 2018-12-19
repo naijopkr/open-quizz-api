@@ -2,6 +2,8 @@ const passport = require('passport')
 const User = require('../models/User')
 
 module.exports = app => {
+
+  //CREATE USER
   app.post('/api/users', (req, res) => {
     const { firstName, lastName, email, password } = req.body
     const newUser = new User({
@@ -9,61 +11,69 @@ module.exports = app => {
       lastName,
       email
     })
-    User.register(newUser, password, (err, user) => {
+    User.register(newUser, password, (err) => {
       if (err) {
         if (err.name === 'UserExistsError' || err.code == 11000) {
-          res.json({ message: 'Usuário já cadastrado', status: 400 })
+          res.send({ message: 'Usuário já cadastrado', status: 400 })
+        } else {
+          console.log(err)
+          res.send(err)
         }
       } else {
         passport.authenticate('local')(req, res, () => {
-          res.send(user)
+          res.redirect('/api/current_user')
         })
       }
     })
   })
 
+  //UPDATE USER
+  //TODO: Handle updating e-mail (username)
   app.put('/api/users', (req, res) => {
-    const { firstName, lastName, email } = req.body
-    const updatedUser = {
-      ...req.user,
+    const { firstName, lastName } = req.body
+    const user = {
       firstName,
-      lastName,
-      email
+      lastName
     }
-    User.findByIdAndUpdate(updatedUser._id, updatedUser, (err, user) => {
+
+    User.findByIdAndUpdate(req.user._id, user, (err) => {
       if (err) {
         res.send(err)
       } else {
-        res.send(user)
+        res.redirect('/api/current_user')
       }
     })
   })
 
+  //AUTHENTICATE USER
   app.post('/api/login', (req, res, next) => {
+
     passport.authenticate('local', (err, user) => {
       if (err) {
-        console.log(err)
+        return next(err)
       }
 
       if (!user) { 
-        res.json({ message: 'Usuário ou senha incorretos.', status: 401 }) 
+        res.send({ message: 'Usuário ou senha incorretos.', status: 401 }) 
       } else {
         req.logIn(user, (err) => {
           if (err) {
             console.log(err)
           }
           
-          res.send(user)
+          res.redirect('/api/current_user')
         })
       }
     })(req, res, next)
   })
 
+  //LOGOUT
   app.get('/logout', (req, res) => {
     req.logout()
     res.redirect('/')
   })
 
+  //FETCH USER
   app.get('/api/current_user', (req, res) => {
     res.send(req.user)
   })
