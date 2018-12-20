@@ -21,14 +21,15 @@ module.exports = app => {
           : res.status(500).send(err)
       }
 
-      return passport.authenticate('local', {
-        successRedirect: '/api/current_user'
+      return passport.authenticate('local', err => {
+        if (err) return res.send(403).send(err)
+        return res.sendStatus(201)
       })(req, res)
     })
   })
 
   //UPDATE USER
-  app.put('/api/users', (req, res) => {
+  app.put('/api/users', requireAuth, (req, res) => {
     const { 
       firstName = req.user.firstName, 
       lastName = req.user.lastName, 
@@ -45,8 +46,24 @@ module.exports = app => {
 
     user.save((err, updUser) => {
       if (err) return res.status(500).send(err)
-      req.login(updUser, err => { if (err) return res.status(401).send(err) })
-      res.redirect('/api/current_user')
+      req.login(updUser, err => { 
+        if (err) return res.status(401).send(err)
+        return res.sendStatus(202) 
+      })
+    })
+  })
+
+  //CHANGE PASSWORD
+  app.put('/api/changePassword', requireAuth, (req, res) => {
+    const { password } = req.body
+
+    const { user } = req
+
+    user.setPassword(password, (err, updUser) => {
+      if (err) return res.status(500).send(err)
+
+      updUser.save()
+      res.sendStatus(202)
     })
   })
 
