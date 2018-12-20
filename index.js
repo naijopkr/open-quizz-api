@@ -51,6 +51,7 @@ app.listen(PORT, err => {
   if (err) {
     console.log(err)
   } else {
+    console.clear()
     console.log('NODE_ENV:', process.env.NODE_ENV || 'development')
     console.log('Server is up on', PORT)
   }

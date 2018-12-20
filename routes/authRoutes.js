@@ -14,43 +14,47 @@ module.exports = app => {
       email
     })
 
-    User.register(newUser, password, (err) => {
+    User.register(newUser, password, (err, user) => {
       if (err) {
         return err.name === 'UserExistsError'
           ? res.status(400).send(err)
           : res.status(500).send(err)
       }
 
-      return passport.authenticate('local', err => {
-        if (err) return res.send(403).send(err)
+      passport.authenticate('local', err => {
+        if (err) return res.sendStatus(403)
+        req.login(user, err => { if (err) return res.sendStatus(403) })
         return res.sendStatus(201)
       })(req, res)
     })
   })
 
   //UPDATE USER
-  app.put('/api/users', requireAuth, (req, res) => {
+  app.put('/api/users', requireAuth, async (req, res) => {
     const { 
       firstName = req.user.firstName, 
       lastName = req.user.lastName, 
-      email = req.user.email 
+      email
     } = req.body
 
     const { user } = req
 
     user.set({
       firstName,
-      lastName,
-      email
+      lastName
     })
 
-    user.save((err, updUser) => {
-      if (err) return res.status(500).send(err)
-      req.login(updUser, err => { 
-        if (err) return res.status(401).send(err)
-        return res.sendStatus(202) 
-      })
-    })
+    if (email && email !== req.user.email) {
+      const count = await User.countDocuments({ email })
+      if (count) {
+        return res.status(400).send('E-mail is already in use')
+      }
+      user.set({ email })
+    }
+    
+    const savedUser = await user.save()
+    req.login(savedUser, err => { if (err) console.log(err) })
+    return res.sendStatus(202)
   })
 
   //CHANGE PASSWORD
