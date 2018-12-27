@@ -6,6 +6,8 @@ const UserSchema = new mongoose.Schema({
   lastName: String,
   email: { type: String, unique: true, required: true },
   password: String,
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
   canMakeQuizz: { type: Boolean, default: true },
   active: { type: Boolean, default: true },
   createdOn: { type: Date, default: Date.now() }
