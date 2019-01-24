@@ -1,6 +1,8 @@
 const Quizz = require('../models/Quizz')
 
 module.exports = app => {
+
+  //INDEX
   app.get('/api/quizz', (req, res) => {
     Quizz.find({ _user: req.user._id }, '-questions', (err, quizzList) => {
       if (err) {
@@ -8,9 +10,10 @@ module.exports = app => {
       } else {
         res.send(quizzList)
       }
-    })  
+    })
   })
 
+  //SHOW
   app.get('/api/quizz/:id', (req, res) => {
     Quizz.findById(req.params.id, 
       '-questions.rightAnswer -questions.explanation', (err, quizz) => {
@@ -22,6 +25,7 @@ module.exports = app => {
       })
   })
 
+  //GET QUESTION ANSWER
   app.get('/api/quizzAnswer/:quizzId/:questionId', (req, res) => {
     Quizz.findOne(
       { _id: req.params.quizzId, questions: { $elemMatch: { _id: req.params.questionId } } }, 
@@ -35,6 +39,7 @@ module.exports = app => {
       })
   })
 
+  //CREATE QUIZZ
   app.post('/api/quizz', (req, res) => {
     const { title, description } = req.body
     const questions = req.body.questions.map((question, index) => {
@@ -67,6 +72,5 @@ module.exports = app => {
         res.send(newQuizz)
       }
     })
-    
   })
 }

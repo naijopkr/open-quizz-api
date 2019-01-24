@@ -135,7 +135,6 @@ module.exports = app => {
     })
   })
 
-
   //AUTHENTICATE USER
   app.post('/api/login', (req, res) => {
     passport.authenticate('local', {
