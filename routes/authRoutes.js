@@ -78,6 +78,7 @@ module.exports = app => {
     })
   })
 
+  //RESET PASSWORD USING TOKEN
   app.post('/api/resetPassword', async (req, res) => {
     const { token, password } = req.body
 
@@ -94,6 +95,11 @@ module.exports = app => {
     user.setPassword(password, (err, updUser) => {
       if (err) return res.status(500).send(err)
 
+      updUser.set({
+        resetPasswordToken: '',
+        resetPasswordExpires: null
+      })
+
       updUser.save()
       return res.sendStatus(202)
     })
@@ -105,8 +111,10 @@ module.exports = app => {
     const user  = await User.findOne({ email: req.body.email })
     
     if (!user) { return res.sendStatus(404) }
-    user.resetPasswordToken = token
-    user.resetPasswordExpires = Date.now() + 1000*60*60
+    user.set({
+      resetPasswordToken: token,
+      resetPasswordExpires: Date.now() + 1000*60*60
+    })
     user.save()
 
     const text = 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
@@ -115,16 +123,15 @@ module.exports = app => {
       'If you did not request this, please ignore this email and your password will remain unchanged.\n'
 
     const mail = {
-      to: 'barcellos.ariel@gmail.com',
+      to: user.email,
       from: 'forgot-password@openquizz.com',
       subject: 'OpenQuizz Password Reset',
       text
     }
 
-    sgMail.send(mail, false, (err, result) => {
+    sgMail.send(mail, false, err => {
       if (err) { return res.status(500).send(err) }
-      console.log(result)
-      return res.send(result)
+      return res.sendStatus(200)
     })
   })
 
