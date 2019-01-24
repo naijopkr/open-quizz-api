@@ -78,6 +78,27 @@ module.exports = app => {
     })
   })
 
+  app.post('/api/resetPassword', async (req, res) => {
+    const { token, password } = req.body
+
+    const user = await User.findOne({
+      resetPasswordToken: token
+    })
+
+    if (!user) return res.sendStatus(404)
+
+    if (user.resetPasswordExpires < Date.now()) { 
+      return res.sendStatus(403) 
+    }
+
+    user.setPassword(password, (err, updUser) => {
+      if (err) return res.status(500).send(err)
+
+      updUser.save()
+      return res.sendStatus(202)
+    })
+  })
+
   //FORGOT PASSWORD
   app.post('/api/forgot', async (req, res) => {
     const token = await crypto.randomBytes(20).toString('hex')
@@ -103,7 +124,7 @@ module.exports = app => {
     sgMail.send(mail, false, (err, result) => {
       if (err) { return res.status(500).send(err) }
       console.log(result)
-      res.send(result)
+      return res.send(result)
     })
   })
 
